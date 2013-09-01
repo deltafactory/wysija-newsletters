@@ -3,7 +3,7 @@ Contributors: wysija, benheu
 Tags: newsletter, newsletters, newsletter signup, newsletter widget, subscribers, post notification, email subscription, email alerts, automatic newsletter, auto newsletter, autoresponder, follow up, email marketing, email, emailing, subscription
 Requires at least: 3.3
 Tested up to: 3.5
-Stable tag: 2.5
+Stable tag: 2.5.5
 Send newsletters, post notifications or autoresponders from WordPress easily, and beautifully.
 
 == Description ==
@@ -35,7 +35,6 @@ http://vimeo.com/46247528
 * Single or double opt-in, your choice
 * Send with your web host, Gmail or SMTP
 * Segment your lists based on opened, clicked & bounced
-
 * Unlimited number of lists
 * Sending in free version is limited to 2000 subscribers
 
@@ -51,7 +50,7 @@ http://vimeo.com/46247528
 * Unlimited spam score tests with mail-tester.com
 * Improve deliverability with DKIM signature
 * We trigger your email queue, like a real cron job
-* Don't reinstall. Simply activate!
+* Don't reinstall. Simply install an additional plugin
 * Priority support
 
 [Visit our Premium page](http://www.wysija.com/wordpress-newsletter-plugin-premium/).
@@ -143,6 +142,44 @@ We got a User Voice page where you can [add or vote for new features](http://wys
 7. Importing subscribers with a CSV.
 
 == Changelog ==
+
+= 2.5.5 - 2013-07-31 =
+* fixed compatibility issue with WordPress 3.6 and latest jQuery
+* fixed general reply to email settings not applied to sign up confirmation email
+* fixed wild "Security failure during request." in the backend of some server configurations
+* fixed count issues on subscribers and list
+* fixed failing to send post notification newsletter preview with the tag [newsletter:post_title]
+* refactored export and import code
+* improved wysija's cron in order to respect better the delays between one scheduled task and another
+
+= 2.5.4 - 2013-07-13 =
+* fixed broken sending process when DKIM is activated but the openSSL php library goes missing
+* fixed missing update procedure of 2.5.2 for bulk confirm
+* fixed daily post notification sending sometimes one day old posts
+* fixed SQL error on user to subscriber synch
+* fixed frontend notice on subscriptions modifications
+* fixed delete automatic newsletters
+* fixed remove one user from all mailing lists at a time from the admin interface
+* added reply-to address in advanced settings
+
+= 2.5.3 - 2013-06-27 =
+* added hook to delete wysija subscribers when a WP multisite user is deleted
+* fixed Wysija's cron page view auto trigger creating some errors on some servers
+* fixed WordPress user auto import as wysija subscribers on multisite
+* fixed rendering issue 2.5.2
+
+= 2.5.2 - 2013-06-26 =
+* fixed confusing text alignment not applied in the visual editor's tiny MCE
+* fixed autosave on step 2, the newsletter editor
+* fixed dragged images in IE10 in the newsletters' visual editor
+* fixed subscribers count not being refreshed after a bulk delete
+* fixed bulk confirm option which was missing a subscribed date to be completely working
+
+= 2.5.1 - 2013-06-17 =
+* added protection to avoid switching to the beta without wanting
+* fixed PHP notices in the newsletter's view in your browser version
+* fixed view in your browser link being left aligned
+* fixed line height issue on some Outlook versions
 
 = 2.5 - 2013-06-06 =
 * added checkbox to select default theme for new newsletters. See Themes tab.

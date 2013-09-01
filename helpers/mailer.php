@@ -155,8 +155,12 @@ class WYSIJA_help_mailer extends acymailingPHPMailer {
             $this->WordWrap = 150;
 
             if($this->config->getValue('dkim_active') && $this->config->getValue('dkim_pubk') && !$this->isElasticRest && !$this->isSendGridRest){
-               $this->DKIM_domain = $this->config->getValue('dkim_domain');
-               $this->DKIM_private = trim($this->config->getValue('dkim_privk'));
+               if(!function_exists('openssl_sign')){
+                   $this->error(__('You cannot use the DKIM signature option...',WYSIJA).' '.__('The PHP Extension openssl is not enabled on your server. Ask your host to enable it if you want to use an SSL connection.',WYSIJA));
+               }else{
+                    $this->DKIM_domain = $this->config->getValue('dkim_domain');
+                    $this->DKIM_private = trim($this->config->getValue('dkim_privk'));
+               }
            }
 
            $this->DKIM_selector   = 'wys';
@@ -172,8 +176,8 @@ class WYSIJA_help_mailer extends acymailingPHPMailer {
 
 
             if(empty($this->ReplyTo)){
-                    $replyToName = $this->config->getValue('reply_name');
-                    $this->AddReplyTo($this->config->getValue('reply_email'),$replyToName);
+                    $replyToName = $this->config->getValue('replyto_name');
+                    $this->AddReplyTo($this->config->getValue('replyto_email'),$replyToName);
             }
 
            //Embed images if there is images to embed...

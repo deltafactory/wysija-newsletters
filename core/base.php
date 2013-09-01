@@ -740,30 +740,30 @@ class WYSIJA extends WYSIJA_object{
 
 
         //check first if a subscribers exists if it doesn't then let's insert it
-        $modelC=WYSIJA::get('config','model');
-        $modelUser=WYSIJA::get('user','model');
-        $modelUser->getFormat=ARRAY_A; // there is one case where we were getting an object instead of an array
-        $subscriber_exists=$modelUser->getOne(array('user_id'),array('email'=>$data->user_email));
-        $modelUser->reset();
+        $model_config=WYSIJA::get('config','model');
+        $model_user=WYSIJA::get('user','model');
+        $model_user->getFormat=ARRAY_A; // there is one case where we were getting an object instead of an array
+        $subscriber_exists=$model_user->getOne(array('user_id'),array('email'=>$data->user_email));
+
+        $first_name=$data->first_name;
+        $last_name=$data->last_name;
+        if(!$data->first_name && !$data->last_name) $first_name=$data->display_name;
+
+        $model_user->reset();
         if($subscriber_exists){
-            $uid=$subscriber_exists['user_id'];
-
+            $user_id=$subscriber_exists['user_id'];
+            // we need to update the current subscriber using it's id
+            $model_user->update(array('wpuser_id'=>$data->ID,'firstname'=>$first_name,'lastname'=>$last_name),array('user_id'=>$user_id));
         }else{
-            $modelUser->noCheck=true;
-
-            $firstname=$data->first_name;
-            $lastname=$data->last_name;
-            if(!$data->first_name && !$data->last_name) $firstname=$data->display_name;
-
-            $uid=$modelUser->insert(array('email'=>$data->user_email,'wpuser_id'=>$data->ID,'firstname'=>$firstname,'lastname'=>$lastname,'status'=>$modelC->getValue('confirm_dbleoptin')));
-
+            $model_user->noCheck=true;
+            $user_id=$model_user->insert(array('email'=>$data->user_email,'wpuser_id'=>$data->ID,'firstname'=>$first_name,'lastname'=>$last_name,'status'=>$model_config->getValue('confirm_dbleoptin')));
         }
 
-        $modelUL=WYSIJA::get('user_list','model');
-        $modelUL->insert(array('user_id'=>$uid,'list_id'=>$modelC->getValue('importwp_list_id'),'sub_date'=>time()),true);
+        $model_user_list=WYSIJA::get('user_list','model');
+        $model_user_list->insert(array('user_id'=>$user_id,'list_id'=>$model_config->getValue('importwp_list_id'),'sub_date'=>time()),true);
 
-        $helperUser=WYSIJA::get('user','helper');
-        $helperUser->sendAutoNl($uid,$data,'new-user');
+        $helper_user=WYSIJA::get('user','helper');
+        $helper_user->sendAutoNl($user_id,$data,'new-user');
         return true;
     }
 
@@ -776,44 +776,44 @@ class WYSIJA extends WYSIJA_object{
         $data=get_userdata($user_id);
 
         //check first if a subscribers exists if it doesn't then let's insert it
-        $modelUser=WYSIJA::get('user','model');
-        $modelC=WYSIJA::get('config','model');
-        $modelUL=WYSIJA::get('user_list','model');
+        $model_user=WYSIJA::get('user','model');
+        $model_config=WYSIJA::get('config','model');
+        $model_user_list=WYSIJA::get('user_list','model');
+        $model_user->getFormat = ARRAY_A;
+        $subscriber_exists=$model_user->getOne(array('user_id'),array('email'=>$data->user_email));
 
-        $subscriber_exists=$modelUser->getOne(array('user_id'),array('email'=>$data->user_email));
+        $model_user->reset();
 
-        $modelUser->reset();
-
-        $firstname=$data->first_name;
-        $lastname=$data->last_name;
-        if(!$data->first_name && !$data->last_name) $firstname=$data->display_name;
+        $first_name=$data->first_name;
+        $last_name=$data->last_name;
+        if(!$data->first_name && !$data->last_name) $first_name=$data->display_name;
 
         if($subscriber_exists){
-            $uid=$subscriber_exists['user_id'];
+            $user_id=$subscriber_exists['user_id'];
 
-            $modelUser->update(array('email'=>$data->user_email,'firstname'=>$firstname,'lastname'=>$lastname),array('wpuser_id'=>$data->ID));
+            $model_user->update(array('wpuser_id'=>$data->ID, 'email'=>$data->user_email,'firstname'=>$first_name,'lastname'=>$last_name),array('user_id'=>$user_id));
 
-            $result=$modelUL->getOne(false,array('user_id'=>$uid,'list_id'=>$modelC->getValue('importwp_list_id')));
-            $modelUL->reset();
+            $result=$model_user_list->getOne(false,array('user_id'=>$user_id,'list_id'=>$model_config->getValue('importwp_list_id')));
+            $model_user_list->reset();
             if(!$result)
-                $modelUL->insert(array('user_id'=>$uid,'list_id'=>$modelC->getValue('importwp_list_id'),'sub_date'=>time()));
+                $model_user_list->insert(array('user_id'=>$user_id,'list_id'=>$model_config->getValue('importwp_list_id'),'sub_date'=>time()));
         }else{
             //chck that we didnt update the email
-            $subscriber_exists=$modelUser->getOne(false,array('wpuser_id'=>$data->ID));
+            $subscriber_exists=$model_user->getOne(false,array('wpuser_id'=>$data->ID));
 
             if($subscriber_exists){
-                $uid=$subscriber_exists['user_id'];
+                $user_id=$subscriber_exists['user_id'];
 
-                $modelUser->update(array('email'=>$data->user_email,'firstname'=>$firstname,'lastname'=>$lastname),array('wpuser_id'=>$data->ID));
+                $model_user->update(array('email'=>$data->user_email,'firstname'=>$first_name,'lastname'=>$last_name),array('wpuser_id'=>$data->ID));
 
-                $result=$modelUL->getOne(false,array('user_id'=>$uid,'list_id'=>$modelC->getValue('importwp_list_id')));
-                $modelUL->reset();
+                $result=$model_user_list->getOne(false,array('user_id'=>$user_id,'list_id'=>$model_config->getValue('importwp_list_id')));
+                $model_user_list->reset();
                 if(!$result)
-                    $modelUL->insert(array('user_id'=>$uid,'list_id'=>$modelC->getValue('importwp_list_id'),'sub_date'=>time()));
+                    $model_user_list->insert(array('user_id'=>$user_id,'list_id'=>$model_config->getValue('importwp_list_id'),'sub_date'=>time()));
             }else{
-                $modelUser->noCheck=true;
-                $uid=$modelUser->insert(array('email'=>$data->user_email,'wpuser_id'=>$data->ID,'firstname'=>$firstname,'lastname'=>$lastname,'status'=>$modelC->getValue('confirm_dbleoptin')));
-                $modelUL->insert(array('user_id'=>$uid,'list_id'=>$modelC->getValue('importwp_list_id'),'sub_date'=>time()));
+                $model_user->noCheck=true;
+                $user_id=$model_user->insert(array('email'=>$data->user_email,'wpuser_id'=>$data->ID,'firstname'=>$first_name,'lastname'=>$last_name,'status'=>$model_config->getValue('confirm_dbleoptin')));
+                $model_user_list->insert(array('user_id'=>$user_id,'list_id'=>$model_config->getValue('importwp_list_id'),'sub_date'=>time()));
             }
         }
         return true;
@@ -824,12 +824,12 @@ class WYSIJA extends WYSIJA_object{
      * @param type $user_id
      */
     public static function hook_del_WP_subscriber($user_id) {
-        $modelConf=WYSIJA::get('config','model');
-        $modelUser=WYSIJA::get('user','model');
-        $data=$modelUser->getOne(array('email','user_id'),array('wpuser_id'=>$user_id));
-        $modelUser->delete(array('email'=>$data['email']));
-        $modelUser=WYSIJA::get('user_list','model');
-        $modelUser->delete(array('user_id'=>$data['user_id'],'list_id'=>$modelConf->getValue('importwp_list_id')));
+        $model_config=WYSIJA::get('config','model');
+        $model_user=WYSIJA::get('user','model');
+        $data = $model_user->getOne(array('email','user_id'),array('wpuser_id'=>$user_id));
+        $model_user->delete(array('email'=>$data['email']));
+        $model_user=WYSIJA::get('user_list','model');
+        $model_user->delete(array('user_id'=>$data['user_id'],'list_id'=>$model_config->getValue('importwp_list_id')));
     }
 
     /**
@@ -842,16 +842,16 @@ class WYSIJA extends WYSIJA_object{
     public static function hook_postNotification_transition($new_status, $old_status, $post) {
         //we run some process only if the status of the post changes from something to publish
         if( $new_status=='publish' && $old_status!=$new_status){
-            $modelEmail = WYSIJA::get('email', 'model');
-            $emails = $modelEmail->get(false, array('type' => 2, 'status' => array(1, 3, 99)));
+            $model_email = WYSIJA::get('email', 'model');
+            $emails = $model_email->get(false, array('type' => 2, 'status' => array(1, 3, 99)));
             if(!empty($emails)){
                 //we loop through all of the automatic emails
                 foreach($emails as $key => $email) {
                     //we will try to give birth to a child email only if the automatic newsletter is a post notification email and in immediate mode
                     if(is_array($email) && $email['params']['autonl']['event'] === 'new-articles' && $email['params']['autonl']['when-article'] === 'immediate') {
                         WYSIJA::log('post_transition_hook_give_birth',array('postID'=>$post->ID,'postID'=>$post->post_title,'old_status'=>$old_status,'new_status'=>$new_status),'post_notif');
-                        $modelEmail->reset();
-                        $modelEmail->give_birth($email, $post->ID);
+                        $model_email->reset();
+                        $model_email->give_birth($email, $post->ID);
                     }
                 }
             }
@@ -991,18 +991,20 @@ class WYSIJA extends WYSIJA_object{
      * @return type an array of frequencies
      */
     public static function get_cron_frequencies(){
-        $mConfig=WYSIJA::get('config','model');
-        $fHelper=WYSIJA::get('forms','helper');
+        $model_config = WYSIJA::get('config','model');
+        $helper_forms = WYSIJA::get('forms','helper');
 
-        if(is_multisite() && $mConfig->getValue('sending_method')=='network'){
-           $sending_emails_each=$mConfig->getValue('ms_sending_emails_each');
+        if(is_multisite() && $model_config->getValue('sending_method')=='network'){
+           $sending_emails_each = $model_config->getValue('ms_sending_emails_each');
         }else{
-           $sending_emails_each=$mConfig->getValue('sending_emails_each');
+           $sending_emails_each = $model_config->getValue('sending_emails_each');
         }
 
-        $queue_frequency=$fHelper->eachValuesSec[$sending_emails_each];
-        $bounce_frequency=99999999999999;
-        if(isset($fHelper->eachValuesSec[$mConfig->getValue('bouncing_emails_each')]))  $bounce_frequency=$fHelper->eachValuesSec[$mConfig->getValue('bouncing_emails_each')];
+        $queue_frequency = $helper_forms->eachValuesSec[$sending_emails_each];
+        $bounce_frequency = 99999999999999;
+        if(isset($helper_forms->eachValuesSec[$model_config->getValue('bouncing_emails_each')])){
+            $bounce_frequency = $helper_forms->eachValuesSec[$model_config->getValue('bouncing_emails_each')];
+        }
         return array('queue'=>$queue_frequency,'bounce'=>$bounce_frequency,'daily'=>86400,'weekly'=>604800,'monthly'=>2419200);
     }
 
@@ -1010,44 +1012,52 @@ class WYSIJA extends WYSIJA_object{
      * set the next cron schedule
      * TODO : needs probably to make the difference of running process for the next schedule, so that there is no delay(this is only problematic on some slow servers)
      * @param string $schedule
-     * @param int $lastsaved
+     * @param int $last_saved
      * @param boolean $set_running
      * @return boolean
      */
-    public static function set_cron_schedule($schedule=false,$lastsaved=0,$set_running=false){
-        $cron_schedules=array();
+    public static function set_cron_schedule($schedule = false , $last_saved = 0 , $set_running = false){
+        $cron_schedules = array();
 
-        $start_time=$lastsaved;
-        if(!$start_time)    $start_time=time();
-        $processes=WYSIJA::get_cron_frequencies();
+        $start_time = $last_saved;
+        if(!$start_time)    $start_time = time();
+        $processes = WYSIJA::get_cron_frequencies();
         if(!$schedule){
             foreach($processes as $process => $frequency){
-                $next_schedule=$start_time+$frequency;
-                $prev_schedule=0;
+                $next_schedule = $start_time + $frequency;
+                $prev_schedule = 0;
                 if(isset($cron_schedules[$process]['running']) && $cron_schedules[$process]['running']) $prev_schedule=$cron_schedules[$process]['running'];
                 $cron_schedules[$process]=array(
-                    'next_schedule'=>$next_schedule,
-                    'prev_schedule'=>$prev_schedule,
-                    'running'=>false);
+                    'next_schedule' => $next_schedule,
+                    'prev_schedule' => $prev_schedule,
+                    'running' => false);
             }
         }else{
-            $cron_schedules=WYSIJA::get_cron_schedule('all');
+            $cron_schedules = WYSIJA::get_cron_schedule('all');
             if($set_running){
-                 $cron_schedules[$schedule]['running']=$set_running;
+                 $cron_schedules[$schedule]['running'] = $set_running;
             }else{
-                 $running=0;
-                if(isset($cron_schedules[$schedule]['running'])) $running=$cron_schedules[$schedule]['running'];
-                //if the process is not running or has been running for more than 15 minutes then we set the next_schedule date
-                if(!$running || time()>$running+900){
-                    $next_schedule=$start_time+$processes[$schedule];
-                    $cron_schedules[$schedule]=array(
-                            'next_schedule'=>$next_schedule,
-                            'prev_schedule'=>$running,
-                            'running'=>false);
+                 $running = 0;
+                if(isset($cron_schedules[$schedule]['running'])) $running = $cron_schedules[$schedule]['running'];
+                // if the process is not running or has been running for more than 15 minutes then we set the next_schedule date
+                $process_frequency = $processes[$schedule];
+
+                if(!$running || ( time() > ($running + $process_frequency) ) ){
+
+                    $next_schedule = $start_time + $process_frequency;
+                    // if the next schedule is already behind, we give it 30 seconds before it can triggers again
+                    if( $next_schedule < $start_time ){
+                        $next_schedule = $start_time + 30;
+                    }
+
+                    $cron_schedules[$schedule] = array(
+                            'next_schedule' => $next_schedule,
+                            'prev_schedule' => $running,
+                            'running' => false);
                 }
             }
         }
-        WYSIJA::update_option('wysija_schedules',$cron_schedules,'yes');
+        WYSIJA::update_option( 'wysija_schedules' , $cron_schedules , 'yes' );
         return true;
     }
 
@@ -1057,50 +1067,64 @@ class WYSIJA extends WYSIJA_object{
      */
     public static function cron_check() {
 
-        $cron_schedules=WYSIJA::get_cron_schedule('all');
+        $cron_schedules = WYSIJA::get_cron_schedule('all');
         if(empty($cron_schedules)) return;
         else{
-            $processes=WYSIJA::get_cron_frequencies();
-            $updatedsched=false;
-            foreach($cron_schedules as $proc => &$params){
-                    $running=0;
-                    if(isset($params['running'])) $running=$params['running'];
+            $processes = WYSIJA::get_cron_frequencies();
+
+            $updated_sched = false;
+            foreach($cron_schedules as $schedule => &$params){
+                    $running = 0;
+                    $time_now = time();
+                    if(isset($params['running'])) $running = $params['running'];
                     //if the process has timedout we reschedule the next execution
-                    if($running && time()>$running+900){
+                    if($running && ( $time_now> ($running + $processes[$schedule]) ) ){
                         //WYSIJA::setInfo('error','modifying next schedule for '.$proc);
-                        $next_schedule=time()+$processes[$proc];
+                        $process_frequency = $processes[$schedule];
+
+                        $next_schedule = $running + $process_frequency;
+                        // if the next schedule is already behind, we give it 30 seconds before it can trigger again
+                        if( $next_schedule < $time_now ){
+                            $next_schedule = $time_now + 30;
+                        }
                         $params=array(
-                                'next_schedule'=>$next_schedule,
-                                'prev_schedule'=>$running,
-                                'running'=>false);
-                        $updatedsched=true;
+                                'next_schedule' => $next_schedule,
+                                'prev_schedule' => $running,
+                                'running' => false);
+                        $updated_sched=true;
                     }
             }
-            if($updatedsched){
+            if($updated_sched){
                 //WYSIJA::setInfo('error','updating scheds');
-                WYSIJA::update_option('wysija_schedules',$cron_schedules,'yes');
+                WYSIJA::update_option( 'wysija_schedules' , $cron_schedules , 'yes' );
             }
 
         }
 
-        $timenow=time();
-        $processesToRun=array();
-        foreach($cron_schedules as $process =>$scheduled_times){
-            if((!$scheduled_times['running'] || (int)$scheduled_times['running']+900<$timenow) && $scheduled_times['next_schedule']<$timenow){
-                $processesToRun[]=$process;
+        $time_now = time();
+        $processesToRun = array();
+        foreach($cron_schedules as $schedule => $scheduled_times){
+            $process_frequency = $processes[$schedule];
+            if( ( !$scheduled_times['running'] || (int)$scheduled_times['running'] + $process_frequency < $time_now ) && $scheduled_times['next_schedule'] < $time_now){
+                $processesToRun[] = $schedule;
             }
         }
 
-        $model_config=WYSIJA::get('config','model');
-        $page_view_trigger=(int)$model_config->getValue('cron_page_hit_trigger');
-        if(!empty($processesToRun) && $page_view_trigger===1){
+        $model_config = WYSIJA::get('config','model');
+        $page_view_trigger = (int)$model_config->getValue('cron_page_hit_trigger');
+        if(!empty($processesToRun) && $page_view_trigger === 1){
             //call the cron url
 
-            $cron_url=site_url( 'wp-cron.php').'?'.WYSIJA_CRON.'&action=wysija_cron&process='.implode(',',$processesToRun).'&silent=1';
+            $cron_url = site_url( 'wp-cron.php').'?'.WYSIJA_CRON.'&action=wysija_cron&process='.implode(',',$processesToRun).'&silent=1';
+            $cron_request = apply_filters( 'cron_request', array(
+                    'url' => $cron_url,
+                    'args' => array( 'timeout' => 0.01, 'blocking' => false, 'sslverify' => apply_filters( 'https_local_ssl_verify', true ) )
+            ) );
 
+            wp_remote_post( $cron_url, $cron_request['args'] );
             //TODO we should use the http class there
-            $hHTTP=WYSIJA::get('http','helper');
-            $hHTTP->request_timeout($cron_url);
+            //$hHTTP=WYSIJA::get('http','helper');
+            //$hHTTP->request_timeout($cron_url);
 
         }
     }
@@ -1142,7 +1166,11 @@ class WYSIJA extends WYSIJA_object{
 add_action('user_register', array('WYSIJA', 'hook_add_WP_subscriber'), 1);
 add_action('added_existing_user', array('WYSIJA', 'hook_add_WP_subscriber'), 1);
 add_action('profile_update', array('WYSIJA', 'hook_edit_WP_subscriber'), 1);
+// for standard blog
 add_action('delete_user', array('WYSIJA', 'hook_del_WP_subscriber'), 1);
+// for multisite
+add_action('deleted_user', array('WYSIJA', 'hook_del_WP_subscriber'), 1);
+
 
 // post notif trigger
 add_action('transition_post_status', array('WYSIJA', 'hook_postNotification_transition'), 1, 3);

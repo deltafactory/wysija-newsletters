@@ -23,18 +23,18 @@ class WYSIJA_control_back_campaigns extends WYSIJA_control_back{
     function welcome_new(){
         $this->title=$this->viewObj->title=__('Welcome Page!',WYSIJA);
         $this->jsTrans['instalwjp']=__('Installing Wysija Newsletter Premium plugin',WYSIJA);
-        $hReadme=WYSIJA::get('readme','helper');
-        $hReadme->scan();
+        $helper_readme=WYSIJA::get('readme','helper');
+        $helper_readme->scan();
         $this->data=array();
-        $this->data['abouttext']=__('A Brand New Wysija. Let the Fun Begin.',WYSIJA);
+        $this->data['abouttext'] = __('A Brand New Wysija. Let the Fun Begin.',WYSIJA);
 
-        $mConfig=WYSIJA::get('config','model');
+        $model_config=WYSIJA::get('config','model');
         $is_multisite=is_multisite();
         $is_network_admin=WYSIJA::current_user_can('manage_network');
         if($is_multisite && $is_network_admin){
-            $mConfig->save(array('ms_wysija_whats_new'=>WYSIJA::get_version()));
+            $model_config->save(array('ms_wysija_whats_new'=>WYSIJA::get_version()));
         }else{
-            $mConfig->save(array('wysija_whats_new'=>WYSIJA::get_version()));
+            $model_config->save(array('wysija_whats_new'=>WYSIJA::get_version()));
         }
 
         //add a new language code with a new video
@@ -45,10 +45,36 @@ class WYSIJA_control_back_campaigns extends WYSIJA_control_back{
         $video_language['ar']='http://www.youtube.com/embed/cyDHlX_qgOo';
 
         if(defined('WPLANG') && WPLANG!='' && isset($video_language[WPLANG])){
-            $welcome_video_link=$video_language[WPLANG];
+            $welcome_video_link = $video_language[WPLANG];
         }else{
-            $welcome_video_link=$video_language['en_EN'];
+            $welcome_video_link = $video_language['en_EN'];
         }
+
+        $this->data['sections'][]=array(
+            'title'=>__('Hey, we\'re curious! How did you find out about us?',WYSIJA).'<span id="poll_result"></span>',
+            'format'=>'normal',
+            'paragraphs'=>array(
+                    '<ul class="welcome_poll">
+                        <li>
+                            <input type="radio" id="how_did_you_find_us_1" value="repository" name="how_did_you_find_us">
+                            <label value="lab1" for="how_did_you_find_us_1">'.__('WordPress.org plugin repository',WYSIJA).'</label>
+                        </li>
+                        <li>
+                            <input type="radio" id="how_did_you_find_us_2" value="search_engine" name="how_did_you_find_us">
+                            <label value="lab2" for="how_did_you_find_us_2">'.__('Google or other search engine',WYSIJA).'</label>
+                        </li>
+                        <li>
+                            <input type="radio" id="how_did_you_find_us_3" value="friend" name="how_did_you_find_us">
+                            <label value="lab3" for="how_did_you_find_us_3">'.__('Friend recommendation',WYSIJA).'</label>
+                        </li>
+                        <li>
+                            <input type="radio" id="how_did_you_find_us_4" value="url" name="how_did_you_find_us">
+                            <label value="lab4" for="how_did_you_find_us_4">'.__('Blog post, online review, forum:',WYSIJA).'</label>
+                            <input type="text" id="how_did_you_find_us_4_url"  name="how_did_you_find_us_url" placeholder="'.__('Please enter the address where you\'ve found out about us',WYSIJA).'">
+                        </li>
+                    </ul>'
+                )
+            );
 
         $this->data['sections'][]=array(
             'title'=>__('First Time? See it in Action',WYSIJA),
@@ -65,22 +91,22 @@ class WYSIJA_control_back_campaigns extends WYSIJA_control_back{
                  array(
                     'title'=>__('5 minute newbie guide',WYSIJA),
                     'content'=>__('Your Wysija comes with an example newsletter. You\'ll see it when you close this welcome page. Edit it to start playing with it.',WYSIJA)
-            ),
+                    ),
                 array(
                     'title'=>__('Share your data',WYSIJA),
                     'content'=>  str_replace(
                             array('[link]', '[/link]', '[ajaxlink]', '[/ajaxlink]'),
                             array('<a title="Anonymous Data" target="_blank" href="http://support.wysija.com/knowledgebase/share-your-data/?utm_source=wpadmin&utm_campaign=welcome_page">', '</a>', '<a id="share_analytics" href="javascript:;">', '</a>'),
                             __("We know too little about our users. We're looking for [link]anonymous data[/link] to build a better plugin. [ajaxlink]Yes, count me in![/ajaxlink]",WYSIJA))
-            ),
+                    ),
                 array(
                     'title'=>__('Help yourself. Or let us help you.',WYSIJA),
                     'content'=>  str_replace(
                             array('[link]','[/link]'),
                             array('<a href="http://support.wysija.com/" target="_blank" title="On our blog!">','</a>'),
                             __('We got documentation and a ticket system on [link]support.wysija.com[/link]. We answer within 24h.',WYSIJA))
-            )
-            ),
+                    )
+                ),
             'format'=>'three-col',
         );
 
@@ -100,16 +126,6 @@ class WYSIJA_control_back_campaigns extends WYSIJA_control_back{
         return true;
     }
 
-    /**
-     * Sometimes our users have a bug where not all of the users from their list are showing up when sending, this is the action to call to fix it
-     * this is very rare.
-     */
-    function fix_lists(){
-        $hUpdate=WYSIJA::get('update','helper');
-        $hUpdate->customerRequestMissingSubscriber();
-        exit;
-    }
-
 
     /**
      * Welcome page for updaters
@@ -123,6 +139,8 @@ class WYSIJA_control_back_campaigns extends WYSIJA_control_back{
         $helper_readme->scan();
         $this->data=array();
         $this->data['abouttext']=__('You updated! It\'s like having the next gadget, but better.',WYSIJA);
+        // this is a flag to have a pretty clean update page where teh only call to action is our survey
+        $show_survey=false;
 
         $is_multisite=is_multisite();
         $is_network_admin=WYSIJA::current_user_can('manage_network');
@@ -138,9 +156,13 @@ class WYSIJA_control_back_campaigns extends WYSIJA_control_back{
 
 
         $major_release=true;
+
+        // those are point release exceptions for which we were advertising the features. we probably can remove that now
         $except_version=array('2.4.1', '2.4.2');
         $wysija_version=WYSIJA::get_version();
         if(!in_array($wysija_version,$except_version) && count(explode('.', $wysija_version))>2) $major_release=false;
+
+
 
         if($major_release){
            $this->data['sections'][]=array(
@@ -187,17 +209,82 @@ class WYSIJA_control_back_campaigns extends WYSIJA_control_back{
                 ),
                 'format'=>'three-col',
             );
+        }elseif($show_no_survey_or_poll = false){ //turn that into a simple else when you want to use the survey or polls again
+            $show_survey=true;
+
+            if($show_survey){
+                $this->data['sections'][] = array(
+                    'title' => __('4 min survey to better understand what you need',WYSIJA),
+                    'type' => 'survey'
+                );
+            }else{ // this is the part about the survey
+                // list of polls from poll daddy
+                $polls=array();
+                $polls[7177099]=__('Where do you send your newsletters?', WYSIJA);
+                $polls[7199642]=__('How many users on this site create and send newsletters?', WYSIJA);
+                $polls[7199625]=__('You\'re installing this plugin for...', WYSIJA);
+                $polls[7196766]=__('How would you feel if you could no longer use us?', WYSIJA);
+                $polls[7196752]=__('Pick one improvement which is an absolute must', WYSIJA);
+                $polls[7196784]=__('If our Premium was sold as a monthly payment, instead of a yearly payment, would you consider purchasing it?', WYSIJA);
+                $polls[7196911]=__('On how many sites have you installed our plugin in the last year?', WYSIJA);
+                $polls[7196646]=__('How many WordPress sites do you create every year?', WYSIJA);
+                $polls[7196742]=__('When you installed our plugin, it was to...', WYSIJA);
+                $polls[7196756]=__('How did you find out about Wysija?', WYSIJA);
+                $polls[7196770]=__('How much money did you spend on Premium themes or plugins in the past year?', WYSIJA);
+                $polls[7196783]=__('What other emailing solutions do you use?', WYSIJA);
+                $polls[7196798]=__('What\'s the most annoying thing with our current version?', WYSIJA);
+                $polls[7196805]=__('Have you had problems with your newsletters being marked as spam?', WYSIJA);
+
+                // get the list of polls with the number of views for each
+                $polls_views=get_option('wysija_polls_views');
+                if(empty($polls_views)){
+                    $polls_views=array();
+                    // this one has been the first poll we've used so we consider that everyone viewed it already once
+                    $polls_views[7177099]=1;
+                }
+
+
+                // make sure that we record each poll
+                foreach($polls as $poll_id => $poll_title){
+                    if(!isset($polls_views[$poll_id])) $polls_views[$poll_id]=0;
+                }
+
+                // group polls by total view
+                $polls_grouped_by_total_view = array();
+                foreach($polls_views as $pollid =>$views){
+                    $polls_grouped_by_total_view[$views][]=$pollid;
+                }
+                // order them
+                ksort($polls_grouped_by_total_view);
+
+                // get the series of polls that has been viewed the least
+                $polls_with_least_views = array_shift($polls_grouped_by_total_view);
+
+                // pull one poll out of that array
+                $random_key = array_rand($polls_with_least_views);
+                $poll_id_selected = $polls_with_least_views[$random_key];
+                $polls_views[$poll_id_selected]++;
+
+                WYSIJA::update_option('wysija_polls_views', $polls_views);
+
+                $this->data['polls'][$poll_id_selected]= $polls[$poll_id_selected];
+                // poll
+                $this->data['sections'][] = array(
+                    'title' => __('A new poll to get to know you better', WYSIJA),
+                    'type' => 'poll'
+                );
+            }
         }
 
         $msg=$model_config->getValue('ignore_msgs');
-        if(!isset($msg['ctaupdate'])){
+        if(!isset($msg['ctaupdate']) && !$show_survey){
             $this->data['sections'][]=array(
                 'title'=>__('Keep this plugin essentially free',WYSIJA),
                 'review'=>array(
                         'title'=>'1. '.__('Love kittens?',WYSIJA).' '.__('We love stars...',WYSIJA),
                         'content'=>str_replace(
                                 array('[link]','[/link]'),
-                                array('<a href="http://wordpress.org/support/view/plugin-reviews/wysija-newsletters" target="_blank" title="On wordpress.org">','</a>'),
+                                array('<a href="http://goo.gl/D52CBL" target="_blank" title="On wordpress.org">','</a>'),
                                 __('Each time one of our users forgets to write a review, a kitten dies. It\'s sad and breaks our hearts. [link]Add your own review[/link] and save a kitten today.',WYSIJA))
 
 
@@ -223,6 +310,7 @@ class WYSIJA_control_back_campaigns extends WYSIJA_control_back{
             'paragraphs'=>$helper_readme->changelog[WYSIJA::get_version()]
             );
         }
+
 
 
 
@@ -995,14 +1083,15 @@ class WYSIJA_control_back_campaigns extends WYSIJA_control_back{
                     'header' => array(
                         'text' => null,
                         'image' => array(
-                            'src' => WYSIJA_EDITOR_IMG.'default-newsletter/newsletter/header.png',
+                            // 'src' => WYSIJA_EDITOR_IMG.'default-newsletter/newsletter/header.png',
+                            'src' => WYSIJA_EDITOR_IMG.'transparent.png',
                             'width' => 600,
-                            'height' => 72,
+                            'height' => 86,
                             'alignment' => 'center',
-                            'static' => false
+                            'static' => true
                         ),
                         'alignment' => 'center',
-                        'static' => false,
+                        'static' => true,
                         'type' => 'header'
                     ),
                     'body' => array(
@@ -1110,14 +1199,15 @@ class WYSIJA_control_back_campaigns extends WYSIJA_control_back{
                     'footer' => array(
                         'text' => NULL,
                         'image' => array(
-                            'src' => WYSIJA_EDITOR_IMG.'default-newsletter/newsletter/footer.png',
+                            // 'src' => WYSIJA_EDITOR_IMG.'default-newsletter/newsletter/footer.png',
+                            'src' => WYSIJA_EDITOR_IMG.'transparent.png',
                             'width' => 600,
-                            'height' => 46,
+                            'height' => 86,
                             'alignment' => 'center',
-                            'static' => false,
+                            'static' => true,
                         ),
                         'alignment' => 'center',
-                        'static' => false,
+                        'static' => true,
                         'type' => 'footer'
                     )
                 );
@@ -1329,9 +1419,9 @@ class WYSIJA_control_back_campaigns extends WYSIJA_control_back{
         $config=WYSIJA::get('config','model');
         //get the filters
         if(isset($_REQUEST['search']) && $_REQUEST['search']){
-            $this->filters["like"]=array();
+            $this->filters['like']=array();
             foreach($this->searchable as $field)
-                $this->filters["like"][$field]=$_REQUEST['search'];
+                $this->filters['like'][$field]=$_REQUEST['search'];
         }
 
         if(isset($_REQUEST['filter-list']) && $_REQUEST['filter-list']){
@@ -1339,9 +1429,12 @@ class WYSIJA_control_back_campaigns extends WYSIJA_control_back{
         }
 
         if(isset($_REQUEST['filter-date']) && $_REQUEST['filter-date']){
-            $this->filters["greater_eq"]=array('created_at'=>$_REQUEST['filter-date']);
-            $this->filters["less_eq"]=array('created_at'=>strtotime("+1 month",$_REQUEST['filter-date']));
+            $this->filters['greater_eq']=array('created_at'=>$_REQUEST['filter-date']);
+            $this->filters['less_eq']=array('created_at'=>strtotime('+1 month',$_REQUEST['filter-date']));
         }
+
+        $this->filters['is'] = array('type'=>'IS NOT NULL');
+
 
         if(isset($_REQUEST['link_filter']) && $_REQUEST['link_filter']){
             $linkfilters=explode('-',$_REQUEST['link_filter']);
@@ -1351,7 +1444,6 @@ class WYSIJA_control_back_campaigns extends WYSIJA_control_back{
             }else{
                 $this->_addLinkFilter($_REQUEST['link_filter']);
             }
-
         }
 
         $this->modelObj->noCheck=true;
@@ -2151,9 +2243,10 @@ class WYSIJA_control_back_campaigns extends WYSIJA_control_back{
         else $this->jsTrans['ispremium']=0;
 
         $this->jsTrans['premiumfiles']=__('Photoshop file available as part of [link]Premium features[/link].',WYSIJA);
-        $helper_licence=WYSIJA::get('licence','helper');
 
-        $this->jsTrans['premiumfiles']=str_replace(array('[link]','[/link]'),array('<a class="premium-tab ispopup" href="javascript:;" >','</a>'),$this->jsTrans['premiumfiles']);
+        $helper_licence = WYSIJA::get('licence','helper');
+        $url_checkout = $helper_licence->get_url_checkout('themes');
+        $this->jsTrans['premiumfiles']=str_replace(array('[link]','[/link]'),array('<a href="'.$url_checkout.'" target="_blank" >','</a>'),$this->jsTrans['premiumfiles']);
 
         $this->jsTrans['showallthemes']=__('Show all themes',WYSIJA);
         $this->jsTrans['totalvotes']=__('(%1$s votes)',WYSIJA);

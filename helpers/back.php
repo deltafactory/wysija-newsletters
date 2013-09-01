@@ -30,7 +30,7 @@ class WYSIJA_help_back extends WYSIJA_help{
             define('WYSIJA_ITF',FALSE);
         }
 
-        if(WYSIJA_DBG>0) include_once(WYSIJA_INC.'debug.php');
+        if( WYSIJA_DBG>0 ) include_once(WYSIJA_INC.'debug.php');
 
         if(!function_exists('dbg')) {
             function dbg($mixed,$exit=true){}
@@ -378,7 +378,7 @@ class WYSIJA_help_back extends WYSIJA_help{
 
     function addRichPlugin($plugin_array) {
        $plugin_array['wysija_register'] = WYSIJA_URL.'mce/wysija_register/editor_plugin.js';
-       //$plugin_array['wysija_links'] = WYSIJA_URL.'mce/wysija_links/editor_plugin.js';
+       $plugin_array['wysija_subscribers'] = WYSIJA_URL.'mce/wysija_subscribers/editor_plugin.js';
 
        return $plugin_array;
     }
@@ -389,6 +389,7 @@ class WYSIJA_help_back extends WYSIJA_help{
        //array_push($newButtons, "|", "styleselect");
        array_push($newButtons, '|', 'wysija_register');
        //array_push($newButtons, "|", "wysija_links");
+       //array_push($newButtons, '|', 'wysija_subscribers');
        return $newButtons;
     }
 
@@ -431,7 +432,9 @@ class WYSIJA_help_back extends WYSIJA_help{
     function footer_add_stars($message){
         $message.=' | '.str_replace(
                 array('[stars]','[link]','[/link]'),
-                array('<a target="_blank" href="http://wordpress.org/support/view/plugin-reviews/wysija-newsletters" >★★★★★</a>','<a target="_blank" href="http://wordpress.org/support/view/plugin-reviews/wysija-newsletters" >','</a>'),
+
+                array('<a target="_blank" href="http://goo.gl/LVsvys" >&#9733;&#9733;&#9733;&#9733;&#9733;</a>','<a target="_blank" href="http://goo.gl/PFGphH" >','</a>'),
+
                 __('Add your [stars] on [link]wordpress.org[/link] and keep this plugin essentially free.',WYSIJA)
                 );
         return $message;

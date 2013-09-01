@@ -26,10 +26,12 @@ class WYSIJA_help_backloader extends WYSIJA_help{
 
         // TO IMPROVE: This has NOTHING TO DO HERE. It has to be moved to the subscribers controller
         if(!$controller->jsTrans){
-            $controller->jsTrans["selecmiss"]=__('Please make a selection first!',WYSIJA);
-            $controller->jsTrans["suredelete"]=__('Deleting a list will not delete any subscribers.',WYSIJA);
-        }
+            $controller->jsTrans['selecmiss']=__('Please make a selection first!',WYSIJA);
+            $controller->jsTrans['suredelete']=__('Deleting a list will not delete any subscribers.',WYSIJA);
 
+
+        }
+        $controller->jsTrans['sure_to_switch_package']=__('Do you want to install that version?',WYSIJA);
         $controller->js[]='wysija-admin-ajax';
         $controller->js[]='thickbox';
         wp_enqueue_style( 'thickbox' );
@@ -154,7 +156,13 @@ class WYSIJA_help_backloader extends WYSIJA_help{
                             // form editor css
                             wp_enqueue_style('wysija-form-editor-css', WYSIJA_URL."css/wysija-form-editor.css",array(),WYSIJA::get_version());
                             break;
+                        case 'wysija-amcharts':
+                            // Wysija chart
+                            wp_enqueue_script("amcharts", WYSIJA_URL."js/amcharts/amcharts.js",array(),WYSIJA::get_version());
+                            wp_enqueue_script("wysija-amcharts", WYSIJA_URL."js/wysija-charts.js",array(),WYSIJA::get_version());
+
                         case 'wysija-editor':
+
                             wp_enqueue_script("wysija-prototype", WYSIJA_URL."js/prototype/prototype.js",array(),WYSIJA::get_version());
                             wp_deregister_script('thickbox');
 
